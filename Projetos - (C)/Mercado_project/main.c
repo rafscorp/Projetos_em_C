@@ -59,6 +59,9 @@ int lerInteiro(const char *impressao)
     return (int) strtol(buffer, NULL, 10);
 }
 
+//essa função devolve um ponteiro alocado no heap (malloc), não uma variável local -
+//por isso quem chama lerChar() é responsável por dar free() depois de usar (o main.c faz isso certinho)
+//se não desse free, cada leitura ia vazar um pouquinho de memória (memory leak) até o programa fechar
 char* lerChar(const char *impressao)
 {
     char buffer[50];
@@ -66,9 +69,9 @@ char* lerChar(const char *impressao)
     printf("%s", impressao);
     fgets(buffer, sizeof(buffer), stdin);
 
-    buffer[strcspn(buffer, "\n")] = '\0';
+    buffer[strcspn(buffer, "\n")] = '\0'; //fgets guarda o \n do Enter no buffer, isso aqui troca ele por fim-de-string
 
-    char *str = malloc(strlen(buffer) + 1);
+    char *str = malloc(strlen(buffer) + 1); //+1 é pro caractere '\0' que fecha a string
     if (!str) {
         printf("Erro de memoria\n");
         slep(1);
@@ -103,6 +106,8 @@ bool verifica_nomeclatura(char nome[64])
     return temLetra;
 }
 
+//valida preço no formato brasileiro tipo "1.234,56" olhando os caracteres de trás pra frente
+//(mais fácil validar centavos e separador decimal começando do fim da string do que do início)
 bool validar_preco(char *entrada) {
     int tam = strlen(entrada);
     if (tam < 4) return false;
@@ -139,6 +144,9 @@ bool verifica_cpf(char *cpf)
     return true;
 }
 
+//struct é como criar um "tipo novo" que junta vários dados relacionados numa coisa só
+//aqui em vez de ter um array de nomes e outro array de preços (desconectados), cada Produtos já
+//carrega os dois campos juntos - fica impossível o preço do índice 3 ser de outro produto por engano
 typedef struct
 {
     char preco[24];
@@ -151,6 +159,8 @@ typedef struct
     char cpf[24];
 } Clientes;
 
+//esses dois ponteiros começam NULL (lista vazia) e crescem com realloc conforme cadastra gente/produto
+//é basicamente um array de tamanho dinâmico: só ocupa memória do que realmente existe cadastrado
 Produtos *produtos = NULL;
 int total_produtos = 0;
 
@@ -258,6 +268,9 @@ bool Nome_existe_cliente(const char *nome)
     return false;
 }
 
+//deixa o nome em minúsculo e remove espaços duplicados só pra COMPARAR (ex: "João  Silva" vira "joão silva")
+//assim "João Silva" e "joão  silva" são detectados como o mesmo cliente na hora de checar duplicidade
+//usa dois índices (i lê o original, j escreve o resultado) pra montar a string nova por cima da mesma memória
 void normalizar_nome(char *str)
 {
     int i = 0, j = 0;
@@ -314,6 +327,9 @@ bool adicionar_Clientes(char *nome, char *cpf)
         }
     }
 
+    //realloc pede pro sistema aumentar o bloco de memória em +1 struct
+    //ele PODE mover o bloco inteiro de lugar na memória, por isso guardamos o resultado num ponteiro
+    //temporário (tmp) antes: se der NULL (falhou), ainda temos o "clientes" antigo intacto pra não perder tudo
     Clientes *tmp = realloc(clientes, (total_clientes + 1) * sizeof(Clientes));
     if (!tmp)
     {
@@ -366,6 +382,9 @@ bool adicionar_Produto(char *nome, char *preco)
     return true;
 }
 
+//não existe "buraco" num array em C, então pra remover o item do meio a gente desloca
+//todo mundo depois dele uma posição pra trás (ex: remove o [2], o que era [3] vira [2], o [4] vira [3]...)
+//só depois de fechar o buraco é que dá pra diminuir o tamanho de verdade com realloc
 void remover_produto(int id)
 {
     if (produtos == NULL || total_produtos == 0)

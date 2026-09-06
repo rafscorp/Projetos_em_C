@@ -22,9 +22,9 @@ Terminal ou prompt de comando:
 
   Linux / macOS
 --Compilar | Linux:
-  gcc main.c -o cyprus
+  gcc Caixa_Cyprus.c -o cyprus
 --Compilar | Windows (MinGW / GCC):
-  gcc main.c -o cyprus.exe
+  gcc Caixa_Cyprus.c -o cyprus.exe
 ---------------------------------------------------
 --Executar | Linux:
   ./cyprus

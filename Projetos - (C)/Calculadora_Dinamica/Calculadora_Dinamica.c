@@ -24,6 +24,9 @@
 #define MKDIR(path) mkdir(path, 0777)
 #endif
 /* ================================================ */
+//essas macros escondem a diferença entre Windows e Linux atrás de um nome só
+//CLEAR_SCREEN(), SLEEP_MS(ms) e MKDIR(path) chamam a função certa dependendo do _WIN32
+//assim o resto do código nem precisa saber em qual sistema está rodando
 
 /* ================== CONSTANTES DE CORES ================== */
 #define RST "\x1b[0m"
@@ -71,6 +74,9 @@
 #define CYN_B_BK "\x1b[106m"
 #define WHT_B_BK "\x1b[107m"
 #define GRY_B_BK "\x1b[47m"
+//esse bloco todo é só código de escape ANSI (\x1b[...m), o terminal lê esses códigos
+//e muda cor/fundo/negrito do texto que vier depois, até aparecer o RST (reset)
+//separei em 4 grupos: cor de texto normal, cor de texto "brilhante" (_B), fundo (_BK) e fundo brilhante (_B_BK)
 
 /* ================== ESTRUTURA DE LOGS ================== */
 typedef enum
@@ -80,7 +86,7 @@ typedef enum
     MOD_CALC_UNI
 } ModuloLog;
 
-static char LOG_SESSAO[64];
+static char LOG_SESSAO[64]; //guarda o "nome" dessa sessão (data+hora), usado no nome dos arquivos de log
 
 void Log_GerarSessao(void)
 {
@@ -90,6 +96,8 @@ void Log_GerarSessao(void)
         return;
     strftime(LOG_SESSAO, sizeof(LOG_SESSAO), "%Y-%m-%d_%H-%M-%S", t);
 }
+//gera um timestamp tipo 2026-01-03_22-04-53 e guarda em LOG_SESSAO
+//todo log escrito na mesma execução do programa cai no mesmo arquivo, porque usa esse mesmo nome
 
 void Log_CriarDir(const char *path)
 {
@@ -139,7 +147,7 @@ void Log_Escrever(ModuloLog modulo, int ehErro, const char *codigo, const char *
         snprintf(caminho, sizeof(caminho), "logs/%s/%s/%s.log", base, tipo, LOG_SESSAO);
     }
 
-    FILE *f = fopen(caminho, "a");
+    FILE *f = fopen(caminho, "a"); //"a" = append, cada chamada abre, escreve uma linha e fecha - não fica com o arquivo preso
     if (!f)
         return;
 
@@ -154,7 +162,8 @@ void Log_Escrever(ModuloLog modulo, int ehErro, const char *codigo, const char *
     fprintf(f, "%s\n", linha);
     fclose(f);
 }
-
+//Log_Escrever é a função "motor": monta o caminho certo (sistema/cientifica/uni, operacao/erro)
+//e escreve a linha formatada. as 3 de baixo são só atalhos pra não ter que montar os parâmetros toda hora
 void Log_Sistema(const char *msg) { Log_Escrever(MOD_SISTEMA, 0, "INFO", msg); }
 void Log_Operacao(ModuloLog mod, const char *op, const char *desc) { Log_Escrever(mod, 0, op, desc); }
 void Log_Erro(ModuloLog mod, const char *cod, const char *desc) { Log_Escrever(mod, 1, cod, desc); }
@@ -278,6 +287,9 @@ void ClearInputUntilNewline(void)
     {
     }
 }
+//essa função existe pra resolver um problema clássico do scanf: se a pessoa digita "abc" onde
+//era esperado um número, o scanf falha mas deixa o "abc\n" parado no buffer de entrada
+//sem limpar isso, a próxima leitura já pegaria o lixo que sobrou e ia falhar de novo sem nem perguntar nada
 
 int LerInt(const char *msg)
 {
@@ -370,6 +382,8 @@ char LerCharOpcao(const char *msg, const char *opcoes)
             ClearInputUntilNewline();
             for (size_t i = 0; opcoes[i] != '\0'; ++i)
             {
+                //compara com a letra digitada E com a versão maiuscula/minuscula dela
+                //(+-32 na tabela ASCII troca entre maiúscula e minúscula), assim aceita "r" ou "R" por exemplo
                 if (c == opcoes[i] || c == (opcoes[i] >= 'a' && opcoes[i] <= 'z' ? opcoes[i] - 32 : opcoes[i] + 32))
                 {
                     return c;
@@ -406,6 +420,9 @@ double RaizC(double a)
     return sqrt(a);
 }
 double PotC(double a, double b) { return pow(a, b); }
+//esse bloco (C) e o de baixo (U) fazem basicamente a mesma coisa - dá pra perceber a repetição
+//uma versão mais avançada resolveria isso com um vetor de ponteiro de função (função só troca de "qual conta fazer"),
+//mas deixei repetido de propósito aqui porque fica mais fácil de ler linha por linha nesse ponto do aprendizado
 
 double AdiU(double a, double b) { return a + b; }
 double SubU(double a, double b) { return a - b; }
@@ -463,6 +480,9 @@ double CalcularOperacaoC(int op, double n1, double n2)
     return res;
 }
 
+//essa função funciona como uma pequena "máquina de estados": estado 0 é a primeira conta (pede os 2 números),
+//estado 1 é o modo de "encadear" contas em cima do resultado anterior (só pede um número novo por vez)
+//esse padrão de "int estado" + while(1) é uma forma simples de controlar telas/fluxos diferentes na mesma função
 void CalculadoraC(void)
 {
     double num1 = 0.0, num2 = 0.0, resposta = 0.0;
@@ -564,6 +584,9 @@ void CalculadoraC(void)
     }
 }
 
+//gera a sequência de forma iterativa (com 3 variáveis andando), não recursiva
+//t1 = termo atual, t2 = próximo termo, t3 = guarda a soma antes de "andar" as variáveis pra frente
+//recursivo seria mais bonito de olhar mas empilha uma chamada de função por termo - iterativo é O(n) e não estoura pilha
 void GerarFibonacci(float *vet, int tamanho)
 {
     float t1 = 0.0f, t2 = 1.0f, t3 = 0.0f;
@@ -599,8 +622,10 @@ void Fibonacci(int n)
         Log_Erro(MOD_CALC_UNI, "FIB_NEG", "Termos invalidos para Fibonacci");
         return;
     }
+    //aloca em tempo de execução porque só sabemos "n" depois que o usuário digita
+    //um vetor fixo (ex: float vet[100]) ia desperdiçar memória se n for pequeno e quebrar se for maior que 100
     float *vet = malloc((size_t)n * sizeof(float));
-    if (!vet)
+    if (!vet) //malloc pode falhar (memória cheia) - sempre checar antes de usar o ponteiro
     {
         Log_Erro(MOD_CALC_UNI, "MEM_ERR", "Erro de alocacao para Fibonacci");
         printf(RED_B_BK " Erro ao alocar memória! " RST "\n");
@@ -612,9 +637,12 @@ void Fibonacci(int n)
     Log_Operacao(MOD_CALC_UNI, "FIBONACCI", "Sequencia de Fibonacci gerada");
     Linha(39, 2, 7);
     Contador(5);
-    free(vet);
+    free(vet); //devolve a memória pro sistema - todo malloc precisa de um free, senão é memory leak
 }
 
+//só checa as regras matemáticas de uma PA (progressão aritmética) e devolve um código de erro (0 = tudo certo)
+//separei essa checagem "pura" da parte interativa de baixo de propósito: essa aqui não imprime nada,
+//não lê nada do teclado, só recebe números e devolve um código - fica fácil de testar sozinha
 int VerificaPA_Logica(float a1, float a2, float razao)
 {
     if (razao == 0.0f)
@@ -630,6 +658,9 @@ int VerificaPA_Logica(float a1, float a2, float razao)
     return 0;
 }
 
+//recebe PONTEIRO pros 3 valores (float *a1 em vez de float a1) porque essa função precisa poder
+//MUDAR o início/fim/razão que o usuário digitou lá em CalculadoraU e essa mudança tem que "voltar" pra lá
+//se fosse por valor normal, qualquer alteração aqui dentro se perderia ao sair da função
 bool VerificaPA_Interativo(float *a1, float *a2, float *razao)
 {
     while (1)

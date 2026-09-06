@@ -92,6 +92,7 @@ float DinheiroFloat()
                         }
                         else
                         {
+                            //fechou o que dava pra tirar dessa cédula, imprime quantas saíram e desce pra próxima
                             if (totC > 0)
                             {
                                 printf(BOLD YELLOW "Você recebeu " RESET BOLD CYAN "%.0f" RESET BOLD YELLOW " cédula(s) de R$%.0f\n" RESET, totC, cMonetaria);
@@ -139,11 +140,16 @@ float DinheiroFloat()
         }
     }
 }
+//essa função é o coração do programa: pergunta o saldo, depois fica em loop pedindo saques
+//a distribuição de cédula é um algoritmo guloso (greedy): sempre tenta usar a maior cédula (200) primeiro
+//e só desce pra próxima (100, 50, 20...) quando ela já não cabe mais no valor que falta sacar
+//obs: usar float pra dinheiro funciona pra esse projeto, mas em sistema de verdade o certo é trabalhar
+//com centavos em int, porque float perde precisão em casas decimais depois de várias contas
 
 int main()   //codigo principal
 {
     ImprimeCabecalho("Bem-vindo ao Caixa eletrônico CYPRUS");
-    printf(BOLD YELLOW "\n Entrando... - USUÁRIO - (" RESET BOLD CYAN " ADRIAN_RAFAEL " RESET BOLD YELLOW ")\n" RESET);
+    printf(BOLD YELLOW "\n Entrando... - USUÁRIO - (" RESET BOLD CYAN " ADRIAN_RAFAEL " RESET BOLD YELLOW ")\n" RESET); //nome fixo só de exemplo, não é login de verdade
     sleep(1);
     DinheiroFloat();
     return 0;

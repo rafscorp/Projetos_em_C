@@ -1,0 +1,8 @@
+# Binários compilados
+*.exe
+*.out
+*.o
+a.out
+
+# Logs gerados em tempo de execução (Calculadora_Dinamica)
+logs/
