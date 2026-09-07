@@ -1,5 +1,10 @@
 # 💻 Projetos em C — Rafael Costa
 
+![C](https://img.shields.io/badge/C-00599C?style=flat-square&logo=c&logoColor=white)
+![Status](https://img.shields.io/badge/status-ativo-35e3a3?style=flat-square)
+![License](https://img.shields.io/badge/licença-MIT-34c3e6?style=flat-square)
+[![Rodar ao vivo](https://img.shields.io/badge/▶_rodar_ao_vivo-no_navegador-35e3a3?style=flat-square)](https://rafscorp.github.io/Projetos_Interativos/)
+
 Repositório com os projetos que venho construindo enquanto aprendo a linguagem C "na prática" — sem curso pronto, direto no terminal, testando ideia por ideia até funcionar de verdade.
 
 A ordem das pastas abaixo é também a ordem em que fui evoluindo: do primeiro programa depois de poucos dias de C até um sistema com structs, memória dinâmica e validação de dados.
